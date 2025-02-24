@@ -14,6 +14,19 @@ const Index = () => {
   });
   const [isValidating, setIsValidating] = useState(false);
 
+  const validateEmail = (email: string): boolean => {
+    // More comprehensive email validation regex
+    const emailRegex = /^(?:[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-zA-Z0-9-]*[a-zA-Z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])$/;
+    
+    if (!email) return false;
+    
+    // Basic format checks
+    if (email.length > 254) return false;
+    if (email.startsWith('.') || email.endsWith('.')) return false;
+    
+    return emailRegex.test(email);
+  };
+
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
 
@@ -28,31 +41,42 @@ const Index = () => {
     
     try {
       const text = await file.text();
-      const emails = text.split('\n').map(email => email.trim()).filter(email => email);
+      const emails = text.split('\n')
+        .map(email => email.trim())
+        .filter(email => email); // Remove empty lines
+      
+      if (emails.length === 0) {
+        toast.error("No emails found in the file");
+        setIsValidating(false);
+        return;
+      }
+
       const total = emails.length;
       const valid: string[] = [];
       const invalid: string[] = [];
+      const batchSize = 100; // Process emails in batches of 100
 
-      // Email validation regex
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-      for (let i = 0; i < emails.length; i++) {
-        const email = emails[i];
-        if (emailRegex.test(email)) {
-          valid.push(email);
-        } else {
-          invalid.push(email);
+      for (let i = 0; i < emails.length; i += batchSize) {
+        const batch = emails.slice(i, i + batchSize);
+        
+        for (const email of batch) {
+          if (validateEmail(email)) {
+            valid.push(email);
+          } else {
+            invalid.push(email);
+          }
         }
         
-        setValidatingProgress(Math.round(((i + 1) / total) * 100));
-        // Add a small delay to show progress
-        await new Promise(resolve => setTimeout(resolve, 50));
+        setValidatingProgress(Math.round(((i + batch.length) / total) * 100));
+        // Small delay to prevent UI freezing
+        await new Promise(resolve => setTimeout(resolve, 0));
       }
 
       setValidationResults({ valid, invalid });
-      toast.success("Validation complete!");
+      toast.success(`Validation complete! Found ${valid.length} valid and ${invalid.length} invalid emails.`);
     } catch (error) {
       toast.error("Error processing file");
+      console.error("Error processing file:", error);
     } finally {
       setIsValidating(false);
     }
