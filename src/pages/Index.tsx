@@ -54,7 +54,7 @@ const Index = () => {
       const total = emails.length;
       const valid: string[] = [];
       const invalid: string[] = [];
-      const batchSize = 100; // Process emails in batches of 100
+      const batchSize = 25; // Reduced batch size for more frequent updates
 
       for (let i = 0; i < emails.length; i += batchSize) {
         const batch = emails.slice(i, i + batchSize);
@@ -68,8 +68,8 @@ const Index = () => {
         }
         
         setValidatingProgress(Math.round(((i + batch.length) / total) * 100));
-        // Small delay to prevent UI freezing
-        await new Promise(resolve => setTimeout(resolve, 0));
+        // Added longer delay between batches to make progress more visible
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
 
       setValidationResults({ valid, invalid });
