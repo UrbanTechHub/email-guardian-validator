@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Check, X, Loader } from "lucide-react";
 
-const ABSTRACT_API_KEY = ''; // You'll need to add your API key here
+const ABSTRACT_API_KEY = 'd3e72829ec36431ebd238c312aa2041c'; // You'll need to add your API key here
 const API_URL = 'https://emailvalidation.abstractapi.com/v1/';
 
 interface EmailValidationResponse {
