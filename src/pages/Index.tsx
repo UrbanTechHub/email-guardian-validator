@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Check, X, Loader } from "lucide-react";
 
 const Index = () => {
   const [validatingProgress, setValidatingProgress] = useState(0);
@@ -43,7 +44,7 @@ const Index = () => {
       const text = await file.text();
       const emails = text.split('\n')
         .map(email => email.trim())
-        .filter(email => email); // Remove empty lines
+        .filter(email => email);
       
       if (emails.length === 0) {
         toast.error("No emails found in the file");
@@ -54,7 +55,7 @@ const Index = () => {
       const total = emails.length;
       const valid: string[] = [];
       const invalid: string[] = [];
-      const batchSize = 25; // Reduced batch size for more frequent updates
+      const batchSize = 10; // Reduced to 10 emails per batch
 
       for (let i = 0; i < emails.length; i += batchSize) {
         const batch = emails.slice(i, i + batchSize);
@@ -68,7 +69,6 @@ const Index = () => {
         }
         
         setValidatingProgress(Math.round(((i + batch.length) / total) * 100));
-        // Added longer delay between batches to make progress more visible
         await new Promise(resolve => setTimeout(resolve, 100));
       }
 
@@ -104,22 +104,25 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-12">
-          <p className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">Email Validator</p>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Validate Your Email List</h1>
-          <p className="text-lg text-gray-600">Upload a .txt file with one email per line</p>
+          <div className="inline-block p-2 bg-blue-50 rounded-lg mb-4">
+            <h1 className="text-4xl font-bold text-gray-900 mb-4 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              Email List Validator
+            </h1>
+          </div>
+          <p className="text-lg text-gray-600">Validate your email list with confidence</p>
         </div>
 
-        <Card className="backdrop-blur-sm bg-white/80 border border-gray-200 rounded-xl p-8 shadow-sm mb-8">
+        <Card className="backdrop-blur-sm bg-white/90 border border-gray-200 rounded-xl p-8 shadow-lg mb-8">
           <div
             {...getRootProps()}
             className={`
-              border-2 border-dashed rounded-lg p-12 text-center transition-all duration-200
+              border-2 border-dashed rounded-xl p-12 text-center transition-all duration-200
               ${isDragActive 
-                ? 'border-gray-400 bg-gray-50' 
-                : 'border-gray-300 hover:border-gray-400'
+                ? 'border-blue-400 bg-blue-50' 
+                : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50'
               }
             `}
           >
@@ -127,7 +130,7 @@ const Index = () => {
             <div className="space-y-4">
               <div className="text-gray-600">
                 {isDragActive ? (
-                  <p>Drop your file here</p>
+                  <p className="text-blue-600 font-medium">Drop your file here</p>
                 ) : (
                   <p>Drag and drop your file here, or click to select</p>
                 )}
@@ -139,8 +142,11 @@ const Index = () => {
           {isValidating && (
             <div className="mt-8 space-y-4">
               <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
-                <span>Validating emails...</span>
-                <span>{validatingProgress}%</span>
+                <div className="flex items-center gap-2">
+                  <Loader className="animate-spin" size={16} />
+                  <span>Validating emails...</span>
+                </div>
+                <span className="font-medium">{validatingProgress}%</span>
               </div>
               <Progress value={validatingProgress} className="h-2" />
             </div>
@@ -148,27 +154,34 @@ const Index = () => {
 
           {!isValidating && validationResults.valid.length > 0 && (
             <div className="mt-8 space-y-6">
-              <div className="space-y-2">
+              <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <h3 className="text-lg font-medium text-gray-900">Results</h3>
                   <Button
                     onClick={downloadResults}
+                    variant="outline"
                     size="sm"
-                    className="transition-all duration-200 hover:scale-105"
+                    className="transition-all duration-200 hover:scale-105 hover:bg-blue-50"
                   >
                     Download Results
                   </Button>
                 </div>
-                <div className="grid grid-cols-2 gap-4 mt-4">
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-gray-500">Valid Emails</p>
-                    <p className="text-2xl font-bold text-green-600">
+                <div className="grid grid-cols-2 gap-6 mt-4">
+                  <div className="p-4 rounded-lg bg-green-50 border border-green-100">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Check className="text-green-600" size={20} />
+                      <p className="text-sm font-medium text-green-800">Valid Emails</p>
+                    </div>
+                    <p className="text-3xl font-bold text-green-600">
                       {validationResults.valid.length}
                     </p>
                   </div>
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-gray-500">Invalid Emails</p>
-                    <p className="text-2xl font-bold text-red-600">
+                  <div className="p-4 rounded-lg bg-red-50 border border-red-100">
+                    <div className="flex items-center gap-2 mb-2">
+                      <X className="text-red-600" size={20} />
+                      <p className="text-sm font-medium text-red-800">Invalid Emails</p>
+                    </div>
+                    <p className="text-3xl font-bold text-red-600">
                       {validationResults.invalid.length}
                     </p>
                   </div>
